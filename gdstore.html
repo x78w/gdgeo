@@ -1,0 +1,162 @@
+<!doctype html author:cdll@20150411>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0"/>
+        <meta name="apple-mobile-web-app-capable" content="yes"/>
+        <meta http-equiv="Cache-Control" CONTENT="no-cache"/>
+        <title>附近的国大药房</title>
+
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
+        <link rel="stylesheet" type="text/css" href="css/style.css"/>
+        <link rel="stylesheet" href="http://cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css"/>
+
+        <script>
+            window.onload= function(){
+                with(document.body) {
+//                    oncontextmenu=function(){return false}
+//                    ondragstart=function(){return false}
+//                    onselectstart=function(){return false}
+                    onbeforecopy=function(){return false}
+                    onselect=function(){document.selection.empty()}
+                    oncopy=function(){document.selection.empty()}
+                }
+            }
+        </script>
+    </head>
+    
+    <body class="gd-store">
+        <div class="container-fluid ms-controller" ms-controller='gd_store'>
+<!--
+            <section class="row geo-nav">
+                <div class='col-xs-1'>
+                     <a class="btn row text-white"><</a>
+                 </div>
+                <div class='col-xs-10'>
+                    <div class="row text-white" type="text" readonly>药店详情</div>
+                </div>
+                <div class='col-xs-1'>
+                     <a class="btn row text-white">...</a>
+                </div>
+            </section>
+-->
+            <section class='row'>
+                <div class="container-fluid">
+                    <p class="p"></p>
+                    <div class=" store-logo text-right">
+                        <img class="img-responsive img-thumbnail" style='max-height:88px;margin-bottom:-55px;object-fit:contain;' ms-attr-src='detail.storePic'/>
+                    </div>
+                    <div class="row store-top">
+                        <div class="col-xs-8 store-name text-left">
+                            <h4 class="text-white b">{{detail.storeName}}</h4>
+                        </div>
+                    </div>
+                    <p class='p'></p>
+                    <div class="row zyo-box box-88" ms-if='detail.tag1==1|| detail.tag3==1'>
+                        <p>
+                            <img class="" ms-if='detail.tag1==1' src="img/tag_2.png" style="height:1.5em;"/>
+                            <img class="" ms-if='detail.tag3==1' src="img/tag_3.png" style="height:1.5em;"/>
+                        </p>
+                    </div>
+                    <div class="row zyo-box zyo-box-last box-88">
+                        <a id='map-on' href='#bmap'>
+                            <dd class="col-xs-11 row" style='border-right:1px solid lightgray;margin-right:-1px;'>
+                                <i class="col-xs-1 fa fa-lg text-gray fa-map-marker" style='padding-top:5px;margin-left:-7px;margin-right:-7px;'></i>
+                                <span class="col-xs-11 text-gray" style="padding-right:0;">{{detail.address}}</span>
+                            </dd>
+                        </a>
+                        <a ms-href='detail.storeDial'>
+                            <dd class="col-xs-1">
+                                <i class="fa fa-lg text-blue fa-phone" style='padding-top:5px;'></i>
+                            </dd>
+                        </a>
+                        <dd class="clear"></dd>
+                    </div>
+                    <div class="row zyo-box zyo-box-last box-88">
+                        <a href="http://wsq.qq.com/reflow/264485837">
+                            <p class="container-fluid" style="line-height:1.25em;">
+                                <span>点击进入在线咨询</span><i class="pull-right text-gray fa fa-chevron-right"></i>
+                            </p>
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </div>
+            <section class=" bmap" style="position:absolute;top:110%;width:100%;">
+                <div id="allmap"></div>
+                <div class="container-fluid">
+                    <br>
+                    <a id="map-off" class="btn btn-block btn-warning" href="javascript:history.go(-1);">返回</a>
+                </div>
+            </section>
+        
+        <script id="zyoAPIcore" src="js/zyo-api-url.js"></script>
+        <script id='jqueryCore' src="http://libs.baidu.com/jquery/1.9.0/jquery.js"></script>
+        <script id='bdMapAPI' src="http://api.map.baidu.com/api?v=2.0&ak=QdZtNSOsAGh3ziGWEskwiCcj"></script>
+        <script type="text/javascript" id="avalonCore" src="http://sandbox.runjs.cn/uploads/rs/65/703jo9wq/avalon.js"></script>
+<!--        <script id='jqueryCore' src="js/jquery-1.9.1.min.js"></script>-->
+        <script>
+            avalon.ready(function(){
+                 vm= avalon.define({
+                    $id: 'gd_store',
+                    detail:{},
+                })
+                //全局参数params
+                var url_param= self.location.href.split('&');
+                params={};
+                for(var i=1,l=url_param.length;i<l;i++){
+                    var el=url_param[i];
+                    params[el.split('=')[0]]= decodeURI(el.split('=')[1]);
+                }
+                avalon.scan()
+                var api_url= zyAPIurl.drugstore_detail+'&storeId='+(params.dataid|| 891)+'&uid=';
+                $.ajax({
+                    url:api_url,
+                    data:'',
+                    success:function(json){
+                        var res= JSON.parse(json);
+                        if(res.code==0){
+//                            console.log(res.data.storeInfo)
+                            vm.detail={
+                                $id: 'gd_store',
+                                storeName:res.data.storeInfo.storeName,
+                                storePic:res.data.storeInfo.storePic||"http://image.lkhealth.net/image/application/20120619/0/4/04_05ltai3lue.png",
+                                address:res.data.storeInfo.address,
+                                storeTel:res.data.storeInfo.storeTel,
+                                storeDial:'tel:'+res.data.storeInfo.storeTel,
+                                tag1:res.data.storeInfo.tag3,
+                                tag3:res.data.storeInfo.tag1,
+                                store_lat:res.data.storeInfo.lat,
+                                store_lng:res.data.storeInfo.lng,
+                            }
+                        }
+                        // 百度地图API功能
+                        var map = new BMap.Map("allmap");
+                        map.enableScrollWheelZoom(true);     //开启鼠标滚轮缩放
+                        map.enableScrollWheelZoom();                 //启用滚轮放大缩小
+                        map.centerAndZoom(new BMap.Point(sessionStorage.user_lng,sessionStorage.user_lat), 11);
+
+                        var p1 = new BMap.Point((sessionStorage.user_lng|| 121.73652),(sessionStorage.user_lat|| 31.26678));
+                        var p2 = new BMap.Point((vm.detail.store_lng|| 116.508328),(vm.detail.store_lat|| 39.919141));
+
+                        var driving = new BMap.DrivingRoute(map, {renderOptions:{map: map, autoViewport: true}});
+                        driving.search(p1, p2);
+                    }
+                })
+                hashMap();
+                window.onhashchange= hashMap;
+                function hashMap(){
+                    var flag= location.hash;
+                    if(flag== '#bmap'){
+                        $('.bmap').delay(0).animate({top:'100px'},500)
+//                        console.log('shit')
+                    }
+                    else{
+                        $('.bmap').delay(0).animate({top:'110%'},500)
+//                        console.log('shit')
+                    }
+                }
+            })
+        </script>
+    </body>
+</html>

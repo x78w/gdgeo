@@ -1,0 +1,297 @@
+<!doctype html author:cdll@20150411>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta http-equiv="Cache-Control" CONTENT="no-cache">
+        <title>附近的国大药房</title>
+
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
+        <link rel="stylesheet" type="text/css" href="css/style.css"/>
+        <link rel="stylesheet" href="http://cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+        
+        <script>
+            window.onload= function(){
+                with(document.body) {
+//                    oncontextmenu=function(){return false}
+//                    ondragstart=function(){return false}
+//                    onselectstart=function(){return false}
+                    onbeforecopy=function(){return false}
+                    onselect=function(){document.selection.empty()}
+                    oncopy=function(){document.selection.empty()}
+                }
+            }
+        </script>
+    </head>
+    
+    <body class="gd-geo">
+        <div class="container-fluid ms-controller" ms-controller='gd_store'>
+            <section class="row geo-nav">
+                <div class="pull-left" data-type='list' id="map-or-list">
+<!--                    <img class='' src=''/>-->
+                    <i class='fa fa-location-arrow fa-list geo-nav-icon'></i>
+                    <span class='text-white'>地图模式</span>
+                </div>
+                <div class="pull-right" id="ip-city">
+                    <img class='' src=''/>
+                    <i class='fa fa-home geo-nav-icon'></i>
+                    <span class='text-white'>  </span>
+                </div>
+                <div class="clear"></div>
+            </section>
+            <section class=" geo-nav geo-nav-cities ">
+                <a id='unchoose' class="col-xs-2 btn btn-sm btn-warning">取消</a>
+                <div class="col-xs-8">
+                    <select class='col-xs-6 btn btn-sm' id="s_province" name="s_province"></select>
+                    <select class='col-xs-6 btn btn-sm' id="s_city" name="s_city" ></select>
+                    <div class="clear"></div>
+                    <select class="hide" id="s_county" name="s_county"></select>
+                </div>
+                <a id='choosed' class="col-xs-2 btn btn-sm btn-danger disabled">确定</a>
+            </section>
+            <section class='text-center geo-tab'>
+                <div class="col-xs-4">
+                    <div class=" geo-tab-block active" data-filter=''>
+                        <br>
+                        所有门店
+                    </div>
+                </div>
+                <div class="col-xs-4">
+                    <div class=" geo-tab-block" data-filter='tag1'>
+                        <br>
+                        医保门店
+                    </div>
+                </div>
+                <div class="col-xs-4">
+                    <div class=" geo-tab-block" data-filter='tag3'>
+                        <br>
+                        24小时门店
+                    </div>
+                </div>
+                <div class="clear">
+                    <p>
+                        <small class="text-black" id='geo'>正在为您定位...</small>
+<!--                        <p>{{user_poi.coords}}</p>-->
+                    </p>
+                </div>
+            </section>
+            <section class="geo-menu geo-menu-list">
+<!--                    {{list.length>2}}-->
+                <dl class="zyo-box zyo-box-88 zyo-box-last" ms-if='list.length>0' ms-repeat-el='list'>
+                    <div class="col-xs-12">
+                        <i class="pull-right"><span>{{el.distance}}</span></i>
+                        <p class="col-xs-10 zyo-h1 b text-black">{{el.name}}</p>
+                        <div class="clear"></div>
+                        <p>
+                            <img class="" ms-if='el.tag3' src="img/tag_2.png" style="height:1.5em;"/>
+                            <img class="" ms-if='el.tag1' src="img/tag_3.png" style="height:1.5em;"/>
+                        </p>
+                        <div class="clear"></div>
+                        <p class="col-xs-10 zyo-h2"><i class="fa fa-map-marker"></i> {{el.address}}</p>
+                        <a class="btn-info btn-round btn-sm pull-right lead-href" ms-href=el.link ms-if='el.distance'><i class="fa fa-arrow-right"></i></a>
+                        <a ms-href="'tel:'+el.tel">
+                            <p class="col-xs-6 zyo-h2 text-blue"><i class="fa fa-phone"></i> {{el.tel}}</p>
+                        </a>
+                    </div>
+                    <div class="clear"></div>
+                </dl>
+                <dl class="" ms-if='list.length==0'>
+                    <br>
+                    <h3 class="text-center">暂无数据</h3>
+                </dl>
+            </section>
+            <section class="geo-menu hide geo-menu-map">
+                <div id="allmap"></div>
+            </section>
+        </div><!--endof container-fluid-->
+
+        <script id="zyoAPIcore" src="js/zyo-api-url.js"></script>
+        <script id='jqueryCore' src="http://libs.baidu.com/jquery/1.9.0/jquery.js"></script>
+        <script id='bdMapAPI' src="http://api.map.baidu.com/api?v=2.0&ak=QdZtNSOsAGh3ziGWEskwiCcj&callback=getMap"></script>
+        <script type="text/javascript" id="avalonCore" src="http://sandbox.runjs.cn/uploads/rs/65/703jo9wq/avalon.js"></script>
+        <script type="text/javascript" id='citiesLib' src="http://sandbox.runjs.cn/uploads/rs/65/703jo9wq/area.js"></script>
+<!--        <script id='jqueryCore' src="js/jquery-1.9.1.min.js"></script>-->
+        <script>
+            avalon.ready(function(){
+                 gd_store= avalon.define({
+                    $id: 'gd_store',
+                    sina_city:'',
+//                    user_poi:'',
+                    user_lat:sessionStorage.user_lat,
+                    user_lng:sessionStorage.user_lng,
+                    list: [],
+                    pushin: function(res_name,res_address,res_tel,res_lat,res_lng,res_distance,res_tag1,res_tag3,res_href){
+                        gd_store.list.push({
+                            name:res_name,
+                            address:res_address,
+                            tel:res_tel,
+                            lat:res_lat,
+                            lng:res_lng,
+                            distance:res_distance,
+                            tag1:res_tag1,
+                            tag3:res_tag3,
+                            link:'gdstore.html?&dataid='+res_href,
+//                            guidWay:console.log(res_lat, res_lng),
+                        })
+                    }
+                })
+//            })
+//            $(document).ready(function(){
+                getPoi()
+//                console.info(gd_store.user_poi= getPoi()||{'coords':{'latitude':31.235305,'longitude':121.432939}})
+                //初始化数据
+                var url_param= self.location.href.split('&');
+                //全局参数params
+                params={};
+                for(var i=1,l=url_param.length;i<l;i++){
+                    var el=url_param[i];
+                    params[el.split('=')[0]]= decodeURI(el.split('=')[1]);
+                }
+                //获取ip所在城市
+                $.getScript('http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=js&ip=', function(){
+                    (!!remote_ip_info)&& $('#ip-city span').text(gd_store.sina_city= remote_ip_info.city);
+                    (!!gd_store.sina_city)&& $('#geo').text('您当前所在城市：'+gd_store.sina_city);
+                    (!!params.city)&& $('#ip-city span').text(params.city);
+                    getList()
+                });
+                //显示当前模式
+                $('#map-or-list span').text(params.map_list?(params.map_list=='list'?'列表模式':'地图模式'):'地图模式');
+                $('#map-or-list').on('click', function(){
+                    $('#map-or-list i').toggleClass('fa-location-arrow', 'fa-list')
+                    $('#map-or-list span').text(($('#map-or-list span').text()== '地图模式')?'列表模式':'地图模式')
+                    $('.geo-menu').toggleClass('hide')
+                })
+                //tab按钮切换
+                $('.geo-tab-block').on('click', function(){
+                    $('.geo-tab-block').removeClass('active')
+                    $(this).addClass('active')
+                    var tab= $(this).attr('data-filter')
+                    getList(tab)
+                })
+                //初始化城市数据
+                _init_area();
+                $('#s_city').on('change',function(){
+                    ($('#s_city').val()!='地级市')&& $('#choosed').removeClass('disabled')
+                })
+                $('#ip-city').on('click', function(){
+                    $('.geo-nav-cities').delay(0).animate({top:0},500)
+                })
+                $('#unchoose').on('click', function(){
+                    $('.geo-nav-cities').delay(0).animate({top:'-100%'},500)
+                })
+                $('#choosed').on('click', function(){
+                    self.location.href= '?&city='+ $('#s_city').val().replace('市'||'','');
+                })
+//                getMap()
+                //获取经纬度
+                function getPoi(){
+                    if(!sessionStorage.user_lat|| !sessionStorage.user_lng){
+//                        setTimeout(function(){
+//                            location.href= location.href;
+//                        },2000)
+                    }
+                    if(navigator.geolocation){
+                        navigator.geolocation.getCurrentPosition(function (poi){
+//                            gd_store.user_poi= poi;
+                            sessionStorage.user_lat= poi.coords.latitude;
+                            sessionStorage.user_lng= poi.coords.longitude;
+                            console.log(sessionStorage.user_lat+','+sessionStorage.user_lng)
+    //                        return poi;
+                        }, function (error){
+                            console.log(error)
+                            $('#geo').text('您的设备可能未开启GPS定位，请到系统设置中开启')
+//                            $('#geo').text('您当前所在城市：'+gd_store.sina_city);
+                        }, {enableHighAccuracy: true,timeout:2000})
+                    }
+                    else{
+                        $('#geo').text('您当前所在城市：'+gd_store.sina_city);
+                        console.log('geolocation is not supported')
+                    }
+                }
+                //生成百度地图
+                function getMap(){
+                    var map= new BMap.Map("allmap");    // 创建Map实例
+                    var city= $('#ip-city span').text();
+                    // 百度地图API功能
+                    if(sessionStorage.user_lat|| sessionStorage.user_lng){
+                        map.centerAndZoom(new BMap.Point(sessionStorage.user_lng, sessionStorage.user_lat), 14);  // 初始化地图,设置用户中心点坐标和地图级别
+                        console.info('CENTER BY:sessionStorage.userpoi')
+                    }
+                    else 
+                    if(params.city){
+                        map.centerAndZoom(params.city,11);      // 初始化地图,用所选城市名设置地图中心点
+                        console.info('CENTER BY:params.city')
+                    }
+                    else{
+                        map.centerAndZoom(gd_store.sina_city,11);      // 初始化地图,用定位城市名设置地图中心点
+                        console.info('CENTER BY:gd_store.sina_city')
+                    }
+                    map.setCurrentCity(params.city);          // 设置地图显示的城市 此项是必须设置的
+                    map.enableScrollWheelZoom(true);     //开启鼠标滚轮缩放
+    //                console.log(!!document.createElement('canvas'))
+                    if(document.createElement('canvas')) {  // 判断当前浏览器是否支持绘制海量点
+                        var points = [];  // 添加海量点数据
+                        var markers = [];  // 添加海量点数据
+                        for (var i = 0, l= gd_store.list.length; i < l; i++) {
+    //                        console.log('BMap marking',gd_store.list[i].lng, gd_store.list[i].lat)
+                            points.push(new BMap.Point(gd_store.list[i].lng, gd_store.list[i].lat));
+                            markers.push(new BMap.Marker(points[i]))
+//                            console.log('link:',markers[i].link= gd_store.list[i].link);
+                            map.addOverlay(markers[i])
+                            markers[i].addEventListener("click",function(e){
+                                var _lat, _href;
+                                console.log(_lat= this.getPosition().lat, e, i)//+','+this.getPosition().lng)
+//                                for(var j= 0, l= gd_store.list.length; j< l; j++){
+//                                    (gd_store.list[j].user_lat== _lat)&& (_href= gd_store.list[j].link);
+//                                }
+//                                location.href='gdstore.html?&dataid='+ gd_store.list[i].link;
+                            })
+                        }
+                    }
+                    else{
+                        alert('请在chrome、safari、IE8+以上浏览器查看本示例');
+                    }
+                }
+                //获取药店列表
+                function getList(tab){
+                    if(!!gd_store.user_lat){
+                        var _index= $(this).index()
+                        var _dis= (params.city== gd_store.sina_city)?100:10000000;
+                        var api_url= zyAPIurl.drugstore_list+'&chainnameId=19&city='+(params.city||gd_store.sina_city)+'&rows=20&lat='+(sessionStorage.user_lat||'31.235305')+'&lng='+(sessionStorage.user_lng||'121.432939')+'&filter='+(tab||'')+'&distance='+_dis;
+                        $.ajax({
+                            url:api_url,
+                            data:'',
+                            success:function(json){
+                                gd_store.list=[];
+                                var res= JSON.parse(json);
+                                if(res.code==0){
+    //                                console.log(res)
+                                    for(i in res.data.storeInfoList){
+                                        gd_store.pushin(res.data.storeInfoList[i].storeName, res.data.storeInfoList[i].address||'无记录', res.data.storeInfoList[i].tel||'暂无', res.data.storeInfoList[i].lat, res.data.storeInfoList[i].lng, res.data.storeInfoList[i].distance, parseInt(res.data.storeInfoList[i].tag1), parseInt(res.data.storeInfoList[i].tag3), res.data.storeInfoList[i].storeId)
+                                    }
+                                    getMap()
+                                }
+    //                            if(gd_store.list.length==0){
+    //                                gd_store.pushin('暂无数据','暂无数据','暂无数据',0)
+    //                            }
+                            }
+                        })
+                    }
+                }
+                avalon.scan()
+            })
+        </script>
+<!--
+        <script id='baiduAnalysis'>
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "http://hm.baidu.com/hm.js?5002c973b1b7f507356d12df430097f5";
+          var s = document.getElementsByTagName("script")[0]; 
+          s.parentNode.insertBefore(hm, s);
+        })();
+        </script>
+-->
+    </body>
+</html>

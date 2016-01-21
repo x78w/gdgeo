@@ -1,0 +1,44 @@
+<a href="weixin://contacts/profile/craigdavy">
+    <button>wechat test</button>
+</a>
+<p id="geoinfo"></p>
+
+<script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+
+<script>
+    $(document).ready(function(){
+        if(!!window.navigator.userAgent.match('MicroMessenger')){// == 'micromessenger'
+            alert('WX');
+        }
+        getPoi()
+        function getPoi(){
+            if(navigator.geolocation){
+                console.log(navigator.geolocation)
+                navigator.geolocation.getCurrentPosition(function (poi){
+                    document.write('<h3>'+poi.coords.latitude+','+poi.coords.longitude+'</h3>')
+                    console.log(poi)
+//                    alert(poi)
+                }, function (error){
+                    //error
+                    switch(error.code){
+                        case error.PERMISSION_DENIED:
+                          geoinfo.innerHTML= "无定位权限<br>User denied the request for Geolocation.";
+                          break;
+                        case error.POSITION_UNAVAILABLE:
+                          geoinfo.innerHTML= "定位不可用<br>Location information is unavailable.";
+                          break;
+                        case error.TIMEOUT:
+                          geoinfo.innerHTML= "定位超时<br>The request to get user location timed out.";
+                          break;
+                        case error.UNKNOWN_ERROR:
+                          geoinfo.innerHTML= "未知错误<br>An unknown error occurred.";
+                          break;
+                    }
+                })
+            }
+            else{
+                alert('geolocation is not supported')
+            }
+        }
+    })
+</script>
